@@ -9,8 +9,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import org.jetbrains.yaml.YAMLFileType
 import org.jetbrains.yaml.YAMLLanguage
+import software.amazon.awssdk.services.s3.S3Client
 import software.aws.toolkits.jetbrains.services.cloudformation.yaml.YamlCloudFormationTemplate
 import java.io.File
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
 
 interface CloudFormationTemplate {
     fun resources(): Sequence<Resource>
@@ -41,11 +44,43 @@ interface CloudFormationTemplate {
     }
 }
 
+enum class PropertyType {
+    SCALAR, LIST, MAP
+}
+
 interface Resource {
     val logicalName: String
 
     fun isType(requestedType: String): Boolean
     fun type(): String?
+    fun getPropertyType(key: String): PropertyType
     fun getScalarProperty(key: String): String
     fun setScalarProperty(key: String, value: String)
+    fun setMappingProperty(key: String, value: Map<String, Any>)
+}
+
+interface Exportable {
+    fun createExporter(): ExportableResource
+}
+
+abstract class ExportableResource(
+    private val resource: Resource,
+    private val exportProperty: String
+) {
+    fun isLocal() = resource.getPropertyType(exportProperty) == PropertyType.SCALAR &&
+            !resource.getScalarProperty(exportProperty).startsWith("s3://")
+
+    fun exportResource(s3Client: S3Client): CompletableFuture<Void> {
+        TODO()
+    }
+
+    abstract fun packageResource(): CompletableFuture<Path>
+
+    abstract fun updateResource(s3Location: String)
+
+    fun createS3Url() {
+
+    }
+
+    fun createS3Mapping() {}
 }

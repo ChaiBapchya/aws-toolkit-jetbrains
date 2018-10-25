@@ -3,7 +3,12 @@
 
 package software.aws.toolkits.jetbrains.services.cloudformation
 
-interface Function : Resource {
+import software.amazon.awssdk.services.lambda.model.Runtime
+import software.aws.toolkits.jetbrains.services.lambda.LambdaPackager
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+
+interface Function : Resource, Exportable {
     fun codeLocation(): String
     fun setCodeLocation(location: String)
     fun runtime(): String
@@ -22,6 +27,12 @@ class LambdaFunction(private val delegate: Resource) : Resource by delegate, Fun
 
     override fun handler(): String = getScalarProperty("Handler")
 
+    override fun createExporter(): ExportableResource = object: ExportableResource(this, "Code") {
+        override fun updateResource(s3Location: String) {
+            TODO("not implemented")
+        }
+    }
+
     override fun toString(): String = logicalName
 }
 
@@ -37,10 +48,24 @@ class SamFunction(private val delegate: Resource) : Resource by delegate, Functi
 
     override fun handler(): String = getScalarProperty("Handler")
 
+    override fun createExporter(): ExportableResource = object: ExportableResource(this, "CodeUri") {
+        override fun packageResource(): CompletableFuture<Path> {
+            
+        }
+
+        override fun updateResource(s3Location: String) {
+            delegate.setMappingProperty("CodeUri", mapOf(
+                "S3Bucket" to s3Location,
+                "S3Key" to s3Location,
+                "S3ObjectVersion" to s3Location
+            ))
+        }
+    }
+
     override fun toString(): String = logicalName
 }
 
-internal val RESOURCE_MAPPINGS = mapOf<String, (Resource) -> Resource>(
+val RESOURCE_MAPPINGS = mapOf<String, (Resource) -> Resource>(
     LAMBDA_FUNCTION_TYPE to ::LambdaFunction,
     SERVERLESS_FUNCTION_TYPE to ::SamFunction
 )

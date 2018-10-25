@@ -14,7 +14,10 @@ import org.jetbrains.yaml.YAMLLanguage
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
+import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.YAMLSequence
 import software.aws.toolkits.jetbrains.services.cloudformation.CloudFormationTemplate
+import software.aws.toolkits.jetbrains.services.cloudformation.PropertyType
 import software.aws.toolkits.jetbrains.services.cloudformation.RESOURCE_MAPPINGS
 import software.aws.toolkits.jetbrains.services.cloudformation.Resource
 import software.aws.toolkits.resources.message
@@ -54,6 +57,15 @@ class YamlCloudFormationTemplate(template: YAMLFile) : CloudFormationTemplate {
 
         override fun type(): String? {
             return delegate.getKeyValueByKey("Type")?.valueText
+        }
+
+        override fun getPropertyType(key: String): PropertyType {
+            return when(properties().getKeyValueByKey(key)?.value) {
+                is YAMLMapping -> PropertyType.MAP
+                is YAMLSequence -> PropertyType.LIST
+                is YAMLScalar -> PropertyType.SCALAR
+                else -> throw IllegalStateException(message("cloudformation.missing_property", key, logicalName))
+            }
         }
 
         override fun getScalarProperty(key: String): String {
