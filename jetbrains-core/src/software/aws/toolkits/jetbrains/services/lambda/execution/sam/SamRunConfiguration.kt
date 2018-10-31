@@ -14,6 +14,7 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -162,8 +163,9 @@ class SamRunConfiguration(project: Project, factory: ConfigurationFactory) :
                     throw RuntimeConfigurationError(message("lambda.run_configuration.sam.no_template_specified", myTemplateFile))
                 }
 
+                val normalizedTemplateFilePath = FileUtil.toSystemDependentName(myTemplateFile)
                 myLogicalFunctionName ?: throw RuntimeConfigurationError(message("lambda.run_configuration.sam.no_function_specified", myTemplateFile))
-                val function = findFunctionsFromTemplate(project, File(templateFile)).find { it.logicalName == myLogicalFunctionName }
+                val function = findFunctionsFromTemplate(project, File(normalizedTemplateFilePath)).find { it.logicalName == myLogicalFunctionName }
                     ?: throw RuntimeConfigurationError(message("lambda.run_configuration.sam.no_such_function", myLogicalFunctionName, myTemplateFile))
                 Triple(function.handler(), Runtime.fromValue(function.runtime()), SamTemplateDetails(myTemplateFile, myLogicalFunctionName))
             } else {

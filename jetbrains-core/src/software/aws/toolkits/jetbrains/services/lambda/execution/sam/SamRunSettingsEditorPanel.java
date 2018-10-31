@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.textCompletion.TextCompletionProvider;
@@ -97,7 +98,7 @@ public final class SamRunSettingsEditorPanel {
             updateFunctionModel(Collections.emptyList(), false);
         } else {
             templateFile.setText(file);
-            List<Function> functions = SamTemplateUtils.findFunctionsFromTemplate(project, new File(file));
+            List<Function> functions = SamTemplateUtils.findFunctionsFromTemplate(project, new File(FileUtil.toSystemDependentName(file)));
             updateFunctionModel(functions, false);
         }
     }
